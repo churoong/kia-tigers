@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  --font-display: "Black Han Sans", var(--font-sans);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(234, 0, 41, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 90% 10%, rgba(234, 0, 41, 0.08), transparent 55%),
+    #0b0b0f;
+  color: #f4f4f5;
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+}
+
+/* 카드 유리 질감 */
+.glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+/* 스코어보드 숫자 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 얇은 스크롤 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
