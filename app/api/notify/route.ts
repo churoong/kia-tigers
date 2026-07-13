@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   const force = sp.get("force") === "1";
   const dry = sp.get("dry") === "1";
   const wantGameId = sp.get("gameId");
-  const siteUrl = process.env.SITE_URL || "https://kia-tigers1.vercel.app";
+  const siteUrl = process.env.SITE_URL || "https://kia-tigers.vercel.app";
 
   const { games } = await getKiaSchedule();
   const finished = games.filter((g) => g.result && !g.canceled); // 최신순
