@@ -1,10 +1,16 @@
-import { getGameDetail, getKiaSchedule, getLeagueStandings } from "@/lib/kbo";
+import {
+  getGameDetail,
+  getGamePreview,
+  getKiaSchedule,
+  getLeagueStandings,
+} from "@/lib/kbo";
 import {
   analyzeGame,
   analyzeLast10,
   analyzeSeries,
   buildNextGamePreview,
 } from "@/lib/humor";
+import { analyzePreview } from "@/lib/preview";
 import { ratePlayers } from "@/lib/rating";
 import { GameSummary } from "@/lib/types";
 import { Gauge, ResultPill, Section } from "@/components/ui";
@@ -15,6 +21,7 @@ import { DotRow, GameRow } from "@/components/GameList";
 import InningBoard from "@/components/InningBoard";
 import Standings from "@/components/Standings";
 import NextGame from "@/components/NextGame";
+import GamePreviewCard from "@/components/GamePreviewCard";
 import PlayerRatings from "@/components/PlayerRatings";
 
 export const revalidate = 600; // 10분 ISR
@@ -55,6 +62,11 @@ export default async function Home() {
     .toISOString()
     .slice(0, 10);
   const nextPreview = buildNextGamePreview(upcoming, games, today);
+
+  // 다음 경기 상세 프리뷰 (선발 육각능력치 + 예상 스코어)
+  const nextGame = upcoming.find((g) => g.statusCode === "BEFORE" && !g.canceled) ?? null;
+  const gamePreview = nextGame ? await getGamePreview(nextGame) : null;
+  const previewAnalysis = gamePreview ? analyzePreview(gamePreview) : null;
 
   // 직관 승률 (홈경기 기준)
   const homeGames = last10.games.filter((g) => g.kiaSide === "home");
@@ -184,10 +196,16 @@ export default async function Home() {
       )}
 
       {/* 다음 경기 프리뷰 */}
-      {nextPreview && (
-        <Section title="다음 경기" emoji="🔮">
-          <NextGame preview={nextPreview} />
+      {previewAnalysis ? (
+        <Section title="다음 경기 프리뷰" emoji="🔮" subtitle="선발 탭하면 육각 능력치">
+          <GamePreviewCard preview={previewAnalysis} />
         </Section>
+      ) : (
+        nextPreview && (
+          <Section title="다음 경기" emoji="🔮">
+            <NextGame preview={nextPreview} />
+          </Section>
+        )
       )}
 
       {/* 최근 시리즈 */}

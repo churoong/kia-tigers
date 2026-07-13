@@ -1,35 +1,23 @@
 name: KIA 경기 프리뷰 알림
 
-# 경기 당일 오전~오후 선발 예고 + 매치업 + 승부예상 + 직관 리마인더 발송.
-# 10/12/14시 KST 엔 양팀 선발이 발표됐을 때만 발송(예고 완성도),
-# 16시 KST(fallback) 엔 미발표라도 매치업·예상·직관정보 발송.
-# 하루 1회만(gameId 캐시). (cron 은 UTC. KST = UTC + 9h)
+# 경기 당일 18:00 KST 에 프리뷰 발송:
+# 유머 헤드라인 + 선발 육각능력치 + 클로드 예상 스코어 + 승부예상 + 직관 리마인더.
+# (18시면 선발 발표 완료. 야간경기 18:30 시작 30분 전.)
+# 하루 1회만(gameId 캐시). cron 은 UTC. KST = UTC + 9h.
 
 on:
   schedule:
-    - cron: "0 1 * * *"   # 10:00 KST
-    - cron: "0 3 * * *"   # 12:00 KST
-    - cron: "0 5 * * *"   # 14:00 KST
-    - cron: "0 7 * * *"   # 16:00 KST (fallback)
+    - cron: "0 9 * * *"   # 18:00 KST
   workflow_dispatch: {}   # 수동 실행 버튼
 
 jobs:
   preview:
     runs-on: ubuntu-latest
     steps:
-      - name: fallback 슬롯 판별
-        id: mode
-        run: |
-          if [ "${{ github.event.schedule }}" = "0 7 * * *" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "fb=&fallback=1" >> "$GITHUB_OUTPUT"
-          else
-            echo "fb=" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: 프리뷰 발송 가능 확인
         id: check
         run: |
-          RESP=$(curl -s --max-time 30 "${{ secrets.SITE_URL }}/api/preview?dry=1&key=${{ secrets.CRON_SECRET }}${{ steps.mode.outputs.fb }}")
+          RESP=$(curl -s --max-time 30 "${{ secrets.SITE_URL }}/api/preview?dry=1&key=${{ secrets.CRON_SECRET }}")
           echo "응답: $RESP"
           echo "sendable=$(echo "$RESP" | jq -r '.sendable // false')" >> "$GITHUB_OUTPUT"
           echo "gameId=$(echo "$RESP" | jq -r '.gameId // ""')" >> "$GITHUB_OUTPUT"
@@ -47,7 +35,7 @@ jobs:
         run: |
           echo "프리뷰 발송 gameId=${{ steps.check.outputs.gameId }}"
           curl -sf --max-time 30 \
-            "${{ secrets.SITE_URL }}/api/preview?key=${{ secrets.CRON_SECRET }}&gameId=${{ steps.check.outputs.gameId }}${{ steps.mode.outputs.fb }}"
+            "${{ secrets.SITE_URL }}/api/preview?key=${{ secrets.CRON_SECRET }}&gameId=${{ steps.check.outputs.gameId }}"
           echo "sent" > preview.flag
 
       - name: 발송 기록 저장

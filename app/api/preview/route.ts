@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGamePreview, getKiaSchedule } from "@/lib/kbo";
-import { buildPreviewText } from "@/lib/preview";
+import { analyzePreview, buildPreviewText } from "@/lib/preview";
 import { sendTelegram } from "@/lib/telegram";
 import { GameSummary } from "@/lib/types";
 
@@ -12,15 +12,13 @@ function kstToday(): string {
 }
 
 /**
- * 경기 전 프리뷰 알림 (선발 예고 + 매치업 + 승부예상 + 직관 리마인더).
- * GitHub Actions가 경기 당일 오전~오후 몇 차례 호출.
+ * 경기 전 프리뷰 알림 (유머 헤드라인 + 선발 육각능력치 + 클로드 예상 스코어 + 승부예상 + 직관 리마인더).
+ * GitHub Actions가 경기 당일 18:00 KST 에 호출.
  *
- * 발송 대상: KST 오늘 열리는 KIA 경기(아직 시작 전).
- * 선발이 발표돼야 완성도가 높으므로 기본은 "양팀 선발 발표됨"일 때만 발송,
- * 마지막 슬롯은 ?fallback=1 로 선발 미발표라도 발송(매치업·예상·직관정보).
+ * 발송 대상: KST 오늘 열리는, 아직 시작 전(BEFORE)인 KIA 경기.
  * 중복 방지(하루 1회)는 호출측(Actions)이 gameId 캐시로 처리.
  *
- * 인증: Bearer <CRON_SECRET> 또는 ?key=. 옵션: ?dry=1 ?force=1 ?fallback=1 ?gameId=
+ * 인증: Bearer <CRON_SECRET> 또는 ?key=. 옵션: ?dry=1 ?force=1 ?gameId=
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -33,17 +31,16 @@ export async function GET(req: NextRequest) {
 
   const force = sp.get("force") === "1";
   const dry = sp.get("dry") === "1";
-  const fallback = sp.get("fallback") === "1";
   const wantGameId = sp.get("gameId");
   const siteUrl = process.env.SITE_URL || "https://kia-tigers.vercel.app";
 
   const { upcoming } = await getKiaSchedule();
   const before = upcoming
-    .filter((g) => g.statusCode !== "RESULT" && !g.canceled)
+    .filter((g) => g.statusCode === "BEFORE" && !g.canceled)
     .sort((a, b) => (a.dateTime > b.dateTime ? 1 : -1)); // 가까운 순
 
   const today = kstToday();
-  let target: GameSummary | null = force
+  const target: GameSummary | null = force
     ? before[0] ?? null
     : before.find((g) => g.date === today) ?? null;
 
@@ -51,7 +48,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       sendable: false,
-      reason: `오늘(${today}) 예정된 KIA 경기 없음`,
+      reason: `오늘(${today}) 시작 전 KIA 경기 없음`,
     });
   }
   if (wantGameId && wantGameId !== target.gameId) {
@@ -70,28 +67,17 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const startersReady =
-    preview.kiaStarter.announced && preview.oppStarter.announced;
-  // 선발 발표 전이면 fallback/force 일 때만 발송 (선발 예고 완성도 위해)
-  if (!startersReady && !fallback && !force) {
-    return NextResponse.json({
-      ok: true,
-      sendable: false,
-      startersReady: false,
-      gameId: target.gameId,
-      reason: "선발 미발표 — 다음 슬롯 대기",
-    });
-  }
+  const analysis = analyzePreview(preview);
+  const text = buildPreviewText(analysis, siteUrl);
 
-  const text = buildPreviewText(preview, siteUrl);
   if (dry) {
     return NextResponse.json({
       ok: true,
       sendable: true,
       sent: false,
       dry: true,
-      startersReady,
       gameId: target.gameId,
+      predicted: analysis.predicted,
       text,
     });
   }
@@ -102,7 +88,6 @@ export async function GET(req: NextRequest) {
       ok: result.ok,
       sendable: true,
       sent: result.ok,
-      startersReady,
       gameId: target.gameId,
       error: result.error,
     },

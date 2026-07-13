@@ -131,6 +131,35 @@ export interface StarterInfo {
   } | null;
 }
 
+// 선발 투수 카드 (능력치 육각 포함)
+export interface StarterCard {
+  team: string; // "KIA" or 상대팀명
+  side: "kia" | "opp";
+  info: StarterInfo;
+  abilities: Ability[]; // 육각 6개
+  overall: number;
+  comment: string; // 유머 한 줄
+}
+
+// 프리뷰 유머 분석 (텔레그램 + 웹 공용)
+export interface PreviewAnalysis {
+  game: GameSummary;
+  gtime: string;
+  stadium: string;
+  kiaRank: number | null;
+  oppRank: number | null;
+  oppName: string;
+  seasonVs: { w: number; l: number; d: number };
+  headline: string;
+  moodEmoji: string;
+  predicted: { kia: number; opp: number; winner: string; line: string };
+  predictionText: string;
+  funFacts: string[];
+  watch: string;
+  kiaStarter: StarterCard;
+  oppStarter: StarterCard;
+}
+
 // 경기 전 프리뷰 (선발 예고 + 매치업 + 상대전적)
 export interface GamePreview {
   game: GameSummary;
