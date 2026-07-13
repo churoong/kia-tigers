@@ -109,6 +109,40 @@ export interface Ability {
   value: number; // 0~99
 }
 
+// 선발 투수 정보 (경기 전 프리뷰용)
+export interface StarterInfo {
+  name: string | null;
+  backnum?: string;
+  hitType?: string; // 좌투좌타 등
+  era: string; // 시즌 ERA
+  w: number;
+  l: number;
+  whip: string;
+  inn?: string; // 시즌 이닝
+  kk: number; // 시즌 탈삼진
+  announced: boolean; // 선발 발표 여부
+  vsOpp?: {
+    era: string;
+    w: number;
+    l: number;
+    inn: string;
+    kk: number;
+    games: number;
+  } | null;
+}
+
+// 경기 전 프리뷰 (선발 예고 + 매치업 + 상대전적)
+export interface GamePreview {
+  game: GameSummary;
+  gtime: string; // "18:30"
+  stadium: string;
+  kiaStarter: StarterInfo;
+  oppStarter: StarterInfo;
+  kiaStanding: LeagueRow | null;
+  oppStanding: LeagueRow | null;
+  seasonVs: { w: number; l: number; d: number }; // KIA 기준 시즌 상대전적
+}
+
 // 다음 경기 프리뷰
 export interface NextGamePreview {
   game: GameSummary;

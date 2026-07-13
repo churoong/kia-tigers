@@ -1,17 +1,16 @@
 name: KIA 경기 종료 알림
 
-# 저녁 21:00 / 21:30 / 22:00 KST 에 경기 종료 확인 → 끝났으면 즉시 텔레그램 발송.
+# 저녁 16:00~22:00 KST 에 10분마다 경기 종료 확인 → 끝났으면 즉시 텔레그램 발송.
 # 22:00까지 안 끝난(=10시 이후 종료) 경기는 다음날 08:00 KST 에 발송.
 # 중복 발송은 gameId 캐시로 하룻밤 1회만 되도록 방지.
-# (GitHub Actions cron 은 UTC 기준. KST = UTC + 9h)
+# (GitHub Actions cron 은 UTC 기준. KST = UTC + 9h. 스케줄은 수 분 지연될 수 있음)
 
 on:
   schedule:
-    - cron: "0 12 * * *"   # 21:00 KST
-    - cron: "30 12 * * *"  # 21:30 KST
-    - cron: "0 13 * * *"   # 22:00 KST
-    - cron: "0 23 * * *"   # 08:00 KST (다음날 아침)
-  workflow_dispatch: {}    # 수동 실행 버튼
+    - cron: "*/10 7-12 * * *"  # 16:00~21:50 KST, 10분마다
+    - cron: "0 13 * * *"       # 22:00 KST (야간 마지막)
+    - cron: "0 23 * * *"       # 08:00 KST (다음날 아침, 10시 이후 종료분)
+  workflow_dispatch: {}        # 수동 실행 버튼
 
 jobs:
   notify:

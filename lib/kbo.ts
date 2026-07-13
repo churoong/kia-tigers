@@ -1,11 +1,13 @@
 import {
   Batter,
   GameDetail,
+  GamePreview,
   GameSummary,
   KIA_CODE,
   LeagueRow,
   Pitcher,
   Side,
+  StarterInfo,
   Standing,
   TeamRef,
 } from "./types";
@@ -127,6 +129,81 @@ export async function getKiaSchedule(): Promise<{
   } catch (err) {
     console.error("[kbo] schedule fallback:", err);
     return { games: SNAPSHOT_SCHEDULE, upcoming: [], live: false };
+  }
+}
+
+function mapStarter(s: any): StarterInfo {
+  const pi = s?.playerInfo ?? {};
+  const st = s?.currentSeasonStats ?? {};
+  const vo = s?.currentSeasonStatsOnOpponents ?? {};
+  const name = pi.name && String(pi.name).trim() ? String(pi.name) : null;
+  const vsGames = Number(vo.gameCount ?? 0);
+  return {
+    name,
+    backnum: pi.backnum ? String(pi.backnum) : undefined,
+    hitType: pi.hitType || undefined,
+    era: String(st.era ?? "-"),
+    w: Number(st.w ?? 0),
+    l: Number(st.l ?? 0),
+    whip: String(st.whip ?? "-"),
+    inn: st.inn2 || st.inn || undefined,
+    kk: Number(st.kk ?? 0),
+    announced: !!name,
+    vsOpp:
+      vsGames > 0
+        ? {
+            era: String(vo.era ?? "-"),
+            w: Number(vo.w ?? 0),
+            l: Number(vo.l ?? 0),
+            inn: String(vo.inn ?? "0"),
+            kk: Number(vo.kk ?? 0),
+            games: vsGames,
+          }
+        : null,
+  };
+}
+
+function mapStandRow(s: any): LeagueRow | null {
+  if (!s?.name) return null;
+  return {
+    name: s.name,
+    rank: Number(s.rank),
+    w: Number(s.w),
+    l: Number(s.l),
+    d: Number(s.d),
+    wra: Number(s.wra),
+    era: Number(s.era),
+    hra: Number(s.hra),
+    hr: Number(s.hr),
+  };
+}
+
+/** 경기 전 프리뷰(선발 예고·매치업·시즌 상대전적). 실패 시 null. */
+export async function getGamePreview(
+  game: GameSummary
+): Promise<GamePreview | null> {
+  try {
+    const json = await getJson(`${API}/schedule/games/${game.gameId}/preview`);
+    const p = json?.result?.previewData;
+    if (!p) return null;
+    const gi = p.gameInfo ?? {};
+    const kiaAway = gi.aCode === KIA_CODE;
+    const vsr = p.seasonVsResult ?? {};
+    return {
+      game,
+      gtime: gi.gtime ?? game.dateTime.slice(11, 16),
+      stadium: gi.stadium ?? game.stadium ?? "",
+      kiaStarter: mapStarter(kiaAway ? p.awayStarter : p.homeStarter),
+      oppStarter: mapStarter(kiaAway ? p.homeStarter : p.awayStarter),
+      kiaStanding: mapStandRow(kiaAway ? p.awayStandings : p.homeStandings),
+      oppStanding: mapStandRow(kiaAway ? p.homeStandings : p.awayStandings),
+      seasonVs: kiaAway
+        ? { w: Number(vsr.aw ?? 0), l: Number(vsr.al ?? 0), d: Number(vsr.ad ?? 0) }
+        : { w: Number(vsr.hw ?? 0), l: Number(vsr.hl ?? 0), d: Number(vsr.hd ?? 0) },
+    };
+  } catch (err) {
+    console.error("[kbo] preview fail:", err);
+    return null;
   }
 }
 
