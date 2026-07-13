@@ -33,10 +33,16 @@ function scale01(v: number): number {
 /* ------------------------------------------------------------------ *
  *  선발 육각 능력치 (구위/제구/체력/안정감/상대공략/승운)
  * ------------------------------------------------------------------ */
+const NEUTRAL_LABELS = ["구위", "제구", "체력", "안정감", "상대공략", "승운"];
+
 export function starterAbilities(s: StarterInfo): Ability[] {
+  const inn = parseFloat(s.inn || "0") || 0;
+  // 선발 미발표 or 데이터 없음(ERA 0.00 & 이닝 0) → 평평한 미정 능력치
+  if (!s.announced || inn <= 0) {
+    return NEUTRAL_LABELS.map((label) => ({ label, value: 40 }));
+  }
   const era = parseFloat(s.era);
   const whip = parseFloat(s.whip);
-  const inn = parseFloat(s.inn || "0") || 0;
   const kk = s.kk;
   const k9 = inn > 0 ? (kk / inn) * 9 : 0;
   const vsEra = s.vsOpp ? parseFloat(s.vsOpp.era) : NaN;
