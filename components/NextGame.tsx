@@ -1,14 +1,11 @@
 import { NextGamePreview } from "@/lib/types";
+import { kstParts } from "@/lib/time";
 import TeamLogo from "./TeamLogo";
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function NextGame({ preview }: { preview: NextGamePreview }) {
   const g = preview.game;
-  const d = new Date(g.dateTime);
-  const dateStr = `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]}) ${String(
-    d.getHours()
-  ).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const t = kstParts(g.dateTime);
+  const dateStr = `${t.m}/${t.d}(${t.weekday}) ${t.hh}:${t.mm}`;
 
   return (
     <div className="glass relative overflow-hidden rounded-3xl p-5">

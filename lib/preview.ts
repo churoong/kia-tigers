@@ -1,3 +1,4 @@
+import { kstParts } from "./time";
 import {
   Ability,
   GamePreview,
@@ -5,8 +6,6 @@ import {
   StarterCard,
   StarterInfo,
 } from "./types";
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -253,8 +252,8 @@ function starterBlock(label: string, c: StarterCard): string {
 
 export function buildPreviewText(a: PreviewAnalysis, siteUrl?: string): string {
   const g = a.game;
-  const d = new Date(g.dateTime);
-  const dateStr = `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+  const t = kstParts(g.dateTime);
+  const dateStr = `${t.m}/${t.d}(${t.weekday})`;
   const place = g.kiaSide === "home" ? "홈" : "원정";
   const kR = a.kiaRank ? `(${a.kiaRank}위)` : "";
   const oR = a.oppRank ? `(${a.oppRank}위)` : "";

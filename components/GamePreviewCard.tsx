@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { PreviewAnalysis, StarterCard } from "@/lib/types";
+import { kstParts } from "@/lib/time";
 import TeamLogo from "./TeamLogo";
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 /* ---------- 선발 육각 레이더 (위닝풍) ---------- */
 function StarterRadar({ card }: { card: StarterCard }) {
@@ -119,8 +118,8 @@ function StarterButton({ card, onClick }: { card: StarterCard; onClick: () => vo
 export default function GamePreviewCard({ preview }: { preview: PreviewAnalysis }) {
   const [modal, setModal] = useState<StarterCard | null>(null);
   const g = preview.game;
-  const d = new Date(g.dateTime);
-  const dateStr = `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+  const t = kstParts(g.dateTime);
+  const dateStr = `${t.m}/${t.d}(${t.weekday})`;
   const place = g.kiaSide === "home" ? "홈" : "원정";
   const p = preview.predicted;
 

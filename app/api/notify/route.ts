@@ -2,21 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getGameDetail, getKiaSchedule } from "@/lib/kbo";
 import { buildGameSummaryText } from "@/lib/summary";
 import { sendTelegram } from "@/lib/telegram";
+import { kstDateStr, kstHour } from "@/lib/time";
 import { GameSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic"; // 항상 실시간 실행
 export const maxDuration = 30;
-
-/** KST 기준 날짜 문자열 (offsetDays: -1 = 어제) */
-function kstDateStr(offsetDays = 0): string {
-  return new Date(Date.now() + 9 * 3600 * 1000 + offsetDays * 86400000)
-    .toISOString()
-    .slice(0, 10);
-}
-/** KST 기준 현재 '시' (0~23) */
-function kstHour(): number {
-  return new Date(Date.now() + 9 * 3600 * 1000).getUTCHours();
-}
 
 /**
  * 경기 종료 알림 엔드포인트.

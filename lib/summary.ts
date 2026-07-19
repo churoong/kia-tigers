@@ -1,7 +1,6 @@
 import { analyzeGame } from "./humor";
+import { kstParts } from "./time";
 import { GameDetail } from "./types";
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -14,8 +13,8 @@ function esc(s: string): string {
 export function buildGameSummaryText(detail: GameDetail, siteUrl?: string): string {
   const a = analyzeGame(detail);
   const s = detail.summary;
-  const d = new Date(s.dateTime);
-  const dateStr = `${d.getMonth() + 1}월 ${d.getDate()}일(${WEEKDAYS[d.getDay()]})`;
+  const t = kstParts(s.dateTime);
+  const dateStr = `${t.m}월 ${t.d}일(${t.weekday})`;
   const place = s.kiaSide === "home" ? "홈" : "원정";
   const resultWord = s.result === "W" ? "승리 🎉" : s.result === "L" ? "패배 😭" : "무승부 🤝";
 

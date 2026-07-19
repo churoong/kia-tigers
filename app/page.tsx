@@ -12,6 +12,7 @@ import {
 } from "@/lib/humor";
 import { analyzePreview } from "@/lib/preview";
 import { ratePlayers } from "@/lib/rating";
+import { kstDateStr } from "@/lib/time";
 import { GameSummary } from "@/lib/types";
 import { Gauge, ResultPill, Section } from "@/components/ui";
 import TeamLogo from "@/components/TeamLogo";
@@ -58,9 +59,7 @@ export default async function Home() {
   const standing = detail?.kiaStanding ?? null;
   const rivals = rivalry(last10.games);
   const rated = detail ? ratePlayers(detail) : [];
-  const today = new Date(Date.now() + 9 * 3600 * 1000) // KST
-    .toISOString()
-    .slice(0, 10);
+  const today = kstDateStr(0); // KST 기준 오늘
   const nextPreview = buildNextGamePreview(upcoming, games, today);
 
   // 다음 경기 상세 프리뷰 (선발 육각능력치 + 예상 스코어)

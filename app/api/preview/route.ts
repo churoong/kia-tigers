@@ -2,14 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getGamePreview, getKiaSchedule } from "@/lib/kbo";
 import { analyzePreview, buildPreviewText } from "@/lib/preview";
 import { sendTelegram } from "@/lib/telegram";
+import { kstDateStr } from "@/lib/time";
 import { GameSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-function kstToday(): string {
-  return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
-}
 
 /**
  * 경기 전 프리뷰 알림 (유머 헤드라인 + 선발 육각능력치 + 클로드 예상 스코어 + 승부예상 + 직관 리마인더).
@@ -39,7 +36,7 @@ export async function GET(req: NextRequest) {
     .filter((g) => g.statusCode === "BEFORE" && !g.canceled)
     .sort((a, b) => (a.dateTime > b.dateTime ? 1 : -1)); // 가까운 순
 
-  const today = kstToday();
+  const today = kstDateStr(0);
   const target: GameSummary | null = force
     ? before[0] ?? null
     : before.find((g) => g.date === today) ?? null;
