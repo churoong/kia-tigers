@@ -19,6 +19,16 @@ export function kstHour(): number {
   return new Date(Date.now() + KST_OFFSET).getUTCHours();
 }
 
+/**
+ * 경기 시작까지 남은 분 (KST 기준, 타임존 무관).
+ * dateTime = "YYYY-MM-DDTHH:mm:ss" (KST 벽시계). 지났으면 음수.
+ */
+export function minutesUntilStart(dateTime: string): number {
+  const startUtc = Date.parse(dateTime + "+09:00"); // KST 벽시계로 해석
+  if (isNaN(startUtc)) return NaN;
+  return (startUtc - Date.now()) / 60000;
+}
+
 /** KST 벽시계 문자열을 표시용 파츠로 (타임존 무관) */
 export function kstParts(dateTime: string): {
   y: number;
