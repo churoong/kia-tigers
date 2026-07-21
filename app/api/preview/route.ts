@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getGamePreview, getKiaSchedule } from "@/lib/kbo";
 import { analyzePreview, buildPreviewText } from "@/lib/preview";
 import { sendTelegram } from "@/lib/telegram";
+import { claimOnce, releaseClaim } from "@/lib/kv";
 import { minutesUntilStart } from "@/lib/time";
 import { GameSummary } from "@/lib/types";
 
@@ -30,7 +31,6 @@ export async function GET(req: NextRequest) {
 
   const force = sp.get("force") === "1";
   const dry = sp.get("dry") === "1";
-  const wantGameId = sp.get("gameId");
   const siteUrl = process.env.SITE_URL || "https://kia-tigers.vercel.app";
 
   const { upcoming } = await getKiaSchedule();
@@ -64,14 +64,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  if (wantGameId && wantGameId !== target.gameId) {
-    return NextResponse.json({
-      ok: true,
-      sendable: false,
-      reason: `gameId 불일치(기대 ${wantGameId} / 현재 ${target.gameId})`,
-    });
-  }
-
   const preview = await getGamePreview(target);
   if (!preview) {
     return NextResponse.json(
@@ -96,7 +88,15 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // 멱등 클레임: 이 경기 프리뷰를 이미 보냈으면 skip
+  const claimKey = `sent:preview:${target.gameId}`;
+  const claimed = force || (await claimOnce(claimKey, 2 * 86400));
+  if (!claimed) {
+    return NextResponse.json({ ok: true, sendable: true, sent: false, deduped: true, gameId: target.gameId });
+  }
+
   const result = await sendTelegram(text);
+  if (!result.ok && !force) await releaseClaim(claimKey);
   return NextResponse.json(
     {
       ok: result.ok,
