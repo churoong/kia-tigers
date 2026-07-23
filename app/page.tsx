@@ -24,6 +24,7 @@ import Standings from "@/components/Standings";
 import NextGame from "@/components/NextGame";
 import GamePreviewCard from "@/components/GamePreviewCard";
 import PlayerRatings from "@/components/PlayerRatings";
+import BackGuard from "@/components/BackGuard";
 
 export const revalidate = 600; // 10분 ISR
 
@@ -93,6 +94,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-16 pt-6">
+      <BackGuard />
       {/* 헤더 */}
       <header className="mb-6">
         <div className="flex items-center gap-3">
